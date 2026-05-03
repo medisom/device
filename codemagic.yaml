@@ -35,16 +35,6 @@ workflows:
       - name: Initialize keychain
         script: keychain initialize
 
-      - name: Fetch signing files (App Store)
-        script: |
-          # Baixa profiles/certs existentes no App Store Connect / Developer Portal
-          # IMPORTANT: sem --create para não tentar criar/“salvar” certificado sem private key
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
-
       - name: Set up code signing in Xcode project
         script: xcode-project use-profiles
 
