@@ -102,10 +102,10 @@ scripts:
         --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
 
 
-  artifacts:
-    - build/ios/ipa/*.ipa
-    - build/ios/ipa/**/*.ipa
-    - build/ios/archive/*.xcarchive
-    - build/ios/archive/**/*.xcarchive
-    - flutter_drive.log
+artifacts:
+  - build/ios/ipa/*.ipa
+  - build/ios/ipa/**/*.ipa
+  - build/ios/archive/*.xcarchive
+  - build/ios/archive/**/*.xcarchive
+  - flutter_drive.log
 
