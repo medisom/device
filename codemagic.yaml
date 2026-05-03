@@ -23,7 +23,7 @@ workflows:
 
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: $BUNDLE_ID
+        bundle_identifier:  com.medisom.app.device
 
 scripts:
   - name: Flutter pub get
