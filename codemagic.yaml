@@ -48,6 +48,11 @@ workflows:
       - name: Build IPA
         script: |
           set -e
+
+          echo "CM_BUILD_NUMBER=$CM_BUILD_NUMBER"
+          BUILD_NUMBER="${CM_BUILD_NUMBER:-1}"
+          echo "Using BUILD_NUMBER=$BUILD_NUMBER"
+          
           flutter --version
           flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist -v
 
