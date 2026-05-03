@@ -41,11 +41,15 @@ workflows:
         script: |
           xcode-project use-profiles
 
+          echo "=== check generated export options ==="
+          ls -la /Users/builder/export_options.plist || true
+          /usr/libexec/PlistBuddy -c "Print" /Users/builder/export_options.plist || true
+
       - name: Build IPA
         script: |
           set -e
           flutter --version
-          flutter build ipa --release --export-method app-store -v
+          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist -v
 
       - name: Inspect archive
         script: |
@@ -63,14 +67,6 @@ workflows:
 
           echo "=== Info.plist inside xcarchive ==="
           find build/ios/archive -name Info.plist -print -exec /usr/libexec/PlistBuddy -c "Print" {} \; || true
-
-      - name: Debug signing and export logs
-        script: |
-          echo "=== xcodebuild logs ==="
-          find /tmp/xcodebuild_logs -maxdepth 3 -type f -print || true
-
-          echo "=== xcdistributionlogs ==="
-          find ~/Library/Developer/Xcode/Archives -maxdepth 6 -type d -name "*.xcdistributionlogs" -print || true
 
     artifacts:
       - build/ios/ipa/*.ipa
