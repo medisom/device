@@ -3,13 +3,6 @@ workflows:
     name: iOS TestFlight (release/ios)
     max_build_duration: 90
     instance_type: mac_mini_m2
-
-    # NOTE:
-    # Codemagic YAML schema does not allow selecting integrations by name.
-    # The integration selection is done in the Codemagic UI.
-    # Since you deleted the old integration and kept only `medisom_device`,
-    # this workflow will automatically use it.
-
     triggering:
       events:
         - push
@@ -21,71 +14,40 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-
+      groups:
+        - medisom_group
+        - app_store_connect
       vars:
         BUNDLE_ID: com.medisom.app.device
-        # REQUIRED (Codemagic UI -> Environment variables):
-        # The Codemagic `app-store-connect` CLI needs the App Store Connect API
-        # Key "Issuer ID". Set it as an environment variable named:
-        #   APP_STORE_CONNECT_ISSUER_ID
-        # Without it, you'll get: "Missing value ISSUER_ID".
-        # NOTE: We intentionally don't pass a Team ID to the `app-store-connect`
-        # CLI below. The Codemagic `app-store-connect` tool does not support
-        # `--team-id` for `fetch-signing-files` (it will error as in your logs).
-        # Team selection is handled by the Apple integration configured in the
-        # Codemagic UI (Provider/Team) and the credentials/API key attached.
-
-      # Automatic code signing.
-      # IMPORTANT (Codemagic UI):
-      # - Ensure "Apple Developer Portal integration" is connected (you already did).
-      # - Ensure an "App Store Connect" integration exists as well (required for TestFlight publishing).
-      # - Codemagic UI -> Workflow -> Code signing: must be enabled for this workflow.
       ios_signing:
         distribution_type: app_store
         bundle_identifier: $BUNDLE_ID
-
     scripts:
       - name: Flutter pub get
         script: flutter pub get
-
       - name: Flutter analyze
         script: flutter analyze
-
-      # The 3 scripts below ensure certificates/profiles exist and are installed.
-      # They rely on Codemagic's Apple integrations (no Xcode login needed).
       - name: Initialize keychain
         script: keychain initialize
-
       - name: Fetch signing files (App Store)
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --create
-
       - name: Set up code signing in Xcode project
         script: xcode-project use-profiles
-
       - name: Build IPA (App Store / TestFlight)
         script: |
           flutter --version
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
-
       - name: Publish to TestFlight
         script: |
           # Publishes the generated IPA to TestFlight using the connected
           # App Store Connect integration in Codemagic UI.
           app-store-connect publish --path build/ios/ipa/*.ipa \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID"
-
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
       - flutter_drive.log
-
-    # Publishing is done via script to avoid YAML schema mismatches.
-    # It uses the App Store Connect integration configured in Codemagic UI.
-    # (With only one integration connected, it will be `medisom_device`.)
-    #
-    # If you prefer the built-in `publishing:` block, we can reintroduce it
-    # after confirming your Codemagic stack supports it.
