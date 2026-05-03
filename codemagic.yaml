@@ -48,18 +48,15 @@ workflows:
       - name: Build IPA
         script: |
           set -e
-      
-          echo "CM_BUILD_NUMBER=$CM_BUILD_NUMBER"
-          BUILD_NUMBER="${CM_BUILD_NUMBER:-1}"
-          echo "Using BUILD_NUMBER=$BUILD_NUMBER"
-      
-          flutter --version
+          # O Codemagic incrementa o INDEX do build a cada nova tentativa, 
+          # vamos usar esse índice como o build number garantido.
+          echo "CM_BUILD_ID=$CM_BUILD_ID"
+          
           flutter build ipa \
             --release \
-            --build-number="$BUILD_NUMBER" \
+            --build-number=$CM_BUILD_ID \
             --export-options-plist=/Users/builder/export_options.plist \
             -v
-
 
       - name: Inspect archive
         script: |
