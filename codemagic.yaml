@@ -73,14 +73,15 @@ scripts:
       echo "=== Finding any .ipa under build/ios ==="
       find build/ios -name "*.ipa" -maxdepth 5 -print || true
 
-  - name: Debug: list iOS build outputs
+  - name: "Debug: list iOS build outputs"
     script: |
       echo "=== build/ios ==="
       ls -la build/ios || true
       echo "=== build/ios/ipa ==="
       ls -la build/ios/ipa || true
       echo "=== find ipa ==="
-      find build -name "*.ipa" -maxdepth 5 || true        
+      find build -maxdepth 5 -name "*.ipa" || true
+
 
   - name: Publish to TestFlight
     script: |
