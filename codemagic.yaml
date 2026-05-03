@@ -25,6 +25,10 @@ workflows:
         bundle_identifier: com.medisom.app.device
 
     scripts:
+      - name: Flutter clean
+        script: |
+          flutter clean
+
       - name: Flutter pub get
         script: |
           flutter pub get
@@ -37,46 +41,41 @@ workflows:
         script: |
           xcode-project use-profiles
 
-      - name: Create ExportOptions.plist
-        script: |
-          cat > $HOME/export_options.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>signingStyle</key>
-            <string>automatic</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>compileBitcode</key>
-            <false/>
-          </dict>
-          </plist>
-          EOF
-
-          /usr/libexec/PlistBuddy -c "Print" "$HOME/export_options.plist"
-
       - name: Build IPA
         script: |
           set -e
-          flutter pub get
-          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          flutter --version
+          flutter build ipa --release --export-method app-store -v
 
-      - name: Debug build outputs
+      - name: Inspect archive
         script: |
           echo "=== build/ios ==="
           ls -la build/ios || true
-          echo "=== build/ios/ipa ==="
+
+          echo "=== archives ==="
+          find build/ios/archive -maxdepth 3 -print || true
+
+          echo "=== ipa dir ==="
           ls -la build/ios/ipa || true
+
           echo "=== find ipa ==="
-          find build -maxdepth 5 -name "*.ipa" || true
+          find build -maxdepth 6 -name "*.ipa" -print || true
+
+          echo "=== Info.plist inside xcarchive ==="
+          find build/ios/archive -name Info.plist -print -exec /usr/libexec/PlistBuddy -c "Print" {} \; || true
+
+      - name: Debug signing and export logs
+        script: |
+          echo "=== xcodebuild logs ==="
+          find /tmp/xcodebuild_logs -maxdepth 3 -type f -print || true
+
+          echo "=== xcdistributionlogs ==="
+          find ~/Library/Developer/Xcode/Archives -maxdepth 6 -type d -name "*.xcdistributionlogs" -print || true
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - build/ios/archive/**/*.xcarchive
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
