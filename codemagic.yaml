@@ -73,6 +73,15 @@ scripts:
       echo "=== Finding any .ipa under build/ios ==="
       find build/ios -name "*.ipa" -maxdepth 5 -print || true
 
+  - name: Debug: list iOS build outputs
+    script: |
+      echo "=== build/ios ==="
+      ls -la build/ios || true
+      echo "=== build/ios/ipa ==="
+      ls -la build/ios/ipa || true
+      echo "=== find ipa ==="
+      find build -name "*.ipa" -maxdepth 5 || true        
+
   - name: Publish to TestFlight
     script: |
       set -e
@@ -92,7 +101,10 @@ scripts:
         --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
 
 
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - build/ios/archive/*.xcarchive
-      - flutter_drive.log
+  artifacts:
+    - build/ios/ipa/*.ipa
+    - build/ios/ipa/**/*.ipa
+    - build/ios/archive/*.xcarchive
+    - build/ios/archive/**/*.xcarchive
+    - flutter_drive.log
+
