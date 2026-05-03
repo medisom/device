@@ -3,6 +3,7 @@ workflows:
     name: iOS TestFlight (release/ios)
     max_build_duration: 90
     instance_type: mac_mini_m2
+
     triggering:
       events:
         - push
@@ -19,34 +20,67 @@ workflows:
         - app_store_connect
       vars:
         BUNDLE_ID: com.medisom.app.device
+
       ios_signing:
         distribution_type: app_store
         bundle_identifier: $BUNDLE_ID
+
     scripts:
       - name: Flutter pub get
         script: flutter pub get
+
       - name: Flutter analyze
         script: flutter analyze
+
       - name: Initialize keychain
         script: keychain initialize
+
       - name: Fetch signing files (App Store)
         script: |
+          # Baixa profiles/certs existentes no App Store Connect / Developer Portal
+          # IMPORTANT: sem --create para não tentar criar/“salvar” certificado sem private key
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --create
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+
       - name: Set up code signing in Xcode project
         script: xcode-project use-profiles
+
+      - name: Create ExportOptions.plist
+        script: |
+          cat > $HOME/export_options.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
       - name: Build IPA (App Store / TestFlight)
         script: |
           flutter --version
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+
       - name: Publish to TestFlight
         script: |
-          # Publishes the generated IPA to TestFlight using the connected
-          # App Store Connect integration in Codemagic UI.
           app-store-connect publish --path build/ios/ipa/*.ipa \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID"
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
