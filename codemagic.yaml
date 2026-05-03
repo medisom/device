@@ -48,16 +48,17 @@ workflows:
       - name: Build IPA
         script: |
           set -e
-          # O Codemagic incrementa o INDEX do build a cada nova tentativa, 
-          # vamos usar esse índice como o build number garantido.
-          echo "CM_BUILD_ID=$CM_BUILD_ID"
-          
+
+          BUILD_NUMBER=3
+          echo "Using BUILD_NUMBER=$BUILD_NUMBER"
+
+          flutter --version
           flutter build ipa \
             --release \
-            --build-number=$CM_BUILD_ID \
+            --build-number="$BUILD_NUMBER" \
             --export-options-plist=/Users/builder/export_options.plist \
             -v
-
+            
       - name: Inspect archive
         script: |
           echo "=== build/ios ==="
