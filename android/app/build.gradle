@@ -48,8 +48,14 @@ android {
 
     buildTypes {
         release {
-            // Use release signing if key.properties exists, otherwise fall back to debug
-            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // IMPORTANT:
+            // Never ship a release build signed with the debug keystore.
+            // Google Play Console rejects debug-signed APK/AAB with:
+            // "You uploaded an APK or Android App Bundle signed in debug mode."
+            if (!keystorePropertiesFile.exists()) {
+                throw new GradleException("Missing key.properties. Create an upload keystore and configure Android release signing (see android/app/build.gradle).")
+            }
+            signingConfig signingConfigs.release
         }
     }
 }
